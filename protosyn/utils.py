@@ -2,6 +2,7 @@ import numpy as np
 
 PDB_FMT = 'ATOM %6d %4s %-4sA %3d    %8.3f%8.3f%8.3f  1.00  0.00%12s'
 
+
 def fit(target_residue, target_selection, mobile_residue, mobile_selection):
     
     k = min(len(target_selection), len(mobile_selection))
