@@ -1,0 +1,7 @@
+*pdb
+!/protosyn/molecules/*
+*pyc
+/protosyn/ai
+/protosyn/out
+/.vscode
+/protosyn/gmx
