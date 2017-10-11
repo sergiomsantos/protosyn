@@ -32,7 +32,7 @@ features = [
 # generate all possible generator combinations from the above
 # features. If permute=True, then all possible permutations
 # within a given generator set will be generated.
-generators_iterator = get_generators(features, permute=True)
+generators_iterator = get_generators(features, permute=True, replicas=1)
 
 # go over all generators
 for k,generator_set in enumerate(generators_iterator, start=1):
@@ -41,7 +41,7 @@ for k,generator_set in enumerate(generators_iterator, start=1):
     # reduce(lambda x,y: x*y, [getattr(g,'side',1) for g in generator_set], 1):
     s1,s2 = [g.side for g in generator_set if isinstance(g, AromaticGenerator)]
     if s1*s2 > 0: 
-        continue
+       continue
 
     # count how may generators exist (each one will yield a single
     # complement - aminoacid residue)

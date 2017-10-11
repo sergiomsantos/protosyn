@@ -149,7 +149,7 @@ class AromaticGenerator(object):
 
 
 
-def get_generators(features, permute=True):
+def get_generators(features, permute=True, replicas=1):
     all_generators = [[]]
     for feature in features:
         tmp = []
@@ -157,9 +157,10 @@ def get_generators(features, permute=True):
             tmp.extend([gen+[generator] for gen in all_generators])
         all_generators = tmp
     
-    for generators in all_generators:
-        if permute:
-            for generator in permutations(generators):
-                yield generator
-        else:
-            yield generators
+    for n_replica in xrange(replicas):
+        for generators in all_generators:
+            if permute:
+                for generator in permutations(generators):
+                    yield generator
+            else:
+                yield generators
