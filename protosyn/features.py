@@ -1,7 +1,7 @@
 from utils import rotation_about_vector, calc_principal_axis
 from builder import FragmentProvider, fit
-
 from itertools import permutations
+from dihedral import DihedralType
 from enum import Enum
 import numpy as np
 
@@ -78,6 +78,10 @@ class AcceptorGenerator(object):
         vAX = vX - vA
 
         complement = FragmentProvider.get_fragment(self.rec_name)
+        # randomize internal dihedrals
+        for dihedral in complement.dihedrals.values():
+            dihedral.radians = np.random.uniform(TWO_PI) 
+
         fit(ligand, [self.lig_x, self.lig_a], complement, [self.rec_h,self.rec_d])
 
         H = complement.get_coordinates(self.rec_h)[0]
@@ -119,6 +123,10 @@ class AromaticGenerator(object):
         offset = side * 3.0 * ring_normal
 
         complement = FragmentProvider.get_fragment(self.rec_name)
+        # randomize internal dihedrals
+        for dihedral in complement.dihedrals.values():
+            dihedral.radians = np.random.uniform(TWO_PI) 
+        
         fit(ligand, self.lig_atoms, complement, self.rec_atoms)
 
         xyz = complement.get_coordinates() - center

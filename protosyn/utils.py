@@ -85,7 +85,7 @@ def calculate_dihedral(x1,x2,x3,x4):
     v234 = np.cross(v23,v34)
 
     angle = np.arctan2(np.dot(np.cross(v123,v234),v23)/np.sqrt(np.dot(v23,v23)),
-                np.dot(v123,v234))
+                       np.dot(v123,v234))
     return angle
 
 

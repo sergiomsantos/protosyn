@@ -9,10 +9,16 @@ from protosyn.ccd import CCD
 
 import random
 
+INPUT_FILE = 'caffeine.pdb'
+OUTPUT_FOLDER = './out'
+
+# make sure the output folder exists
+if not os.path.exists(OUTPUT_FOLDER):
+    os.makedirs(OUTPUT_FOLDER)
 
 # read the ligand from a PDB file and extract the first residue
 # (it is expected that the ligand contains only one single residue)
-ligand = Molecule.LoadFromFile('caffeine.pdb').residues[0]
+ligand = Molecule.LoadFromFile(INPUT_FILE).residues[0]
 
 # define the features for the required ligand. In this case,
 # two H-bond acceptors and two aromatic rings that can be involved
@@ -75,13 +81,14 @@ for k,generator_set in enumerate(generators_iterator, start=1):
     # close all chains
     # -------------------------------------------------------------------------
     chains = peptide.get_segments()
-    for chain1,chain2 in zip(chains[:-1],chains[1:]):
+    for n,(chain1,chain2) in enumerate(zip(chains[:-1],chains[1:]), start=1):
         anchor = chain1[0]
         target = chain2[0]
         # use CCD to close the loop, holding in position the first residue
         # of chain1 and targetting the first residue of chain2
-        #ccd = CCD(anchor, target, max_iter=200, threshold=0.5)
-        #success, rmsd, iteration = ccd.run(peptide)
+        ccd = CCD(anchor, target, max_iter=200, threshold=0.5)
+        success, rmsd, iteration = ccd.run(peptide)
+        print ' + ccd chain %d'%n, success, rmsd, iteration
 
         # the last residue of chain1 is a dummy one that
         # its sole purpose is to calculate the distance to
