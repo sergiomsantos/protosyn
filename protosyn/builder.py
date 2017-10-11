@@ -121,6 +121,14 @@ class FragmentProvider:
         return frag if frag is None else frag.copy()
 
 
+def impose_secondary_structure(peptide, selection, ss):
+    residues = peptide.residues[selection]
+    for dtype, value in ss.iteritems():
+        for residue in residues:
+            if dtype in residue.dihedrals:
+                residue.dihedrals[dtype].degrees = value
+
+
 #         # set secondary structure
 #         for _slice,dihedrals in self.secondary_structure:
 #             #print _slice
@@ -133,21 +141,20 @@ class FragmentProvider:
 #         return mol
 
 
-
-CONF_LIB = {
-    'alpha' : {
+class ConfLib(object):
+    alpha = {
         DihedralType.PHI:    -57.0,
         DihedralType.PSI:    -47.0,
         DihedralType.OMEGA:  180.0
-    },
-    'abeta': {
+    }
+    abeta = {
         DihedralType.PHI:   -139.0,
         DihedralType.PSI:    135.0,
         DihedralType.OMEGA: -178.0
-    },
-    'pbeta': {
+    }
+    pbeta = {
         DihedralType.PHI:   -119.0,
         DihedralType.PSI:    113.0,
         DihedralType.OMEGA:  180.0
     }
-}
+

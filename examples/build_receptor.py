@@ -1,6 +1,4 @@
-import os
-import sys
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from context import protosyn
 
 from protosyn.features import AcceptorFeature, AromaticFeature, AromaticGenerator, get_generators
 from protosyn.builder import grow, cap_chain
@@ -8,6 +6,7 @@ from protosyn.molecule import Molecule
 from protosyn.ccd import CCD
 
 import random
+import os
 
 INPUT_FILE = 'caffeine.pdb'
 OUTPUT_FOLDER = './out'
@@ -34,10 +33,6 @@ features = [
 # features. If permute=True, then all possible permutations
 # within a given generator set will be generated.
 generators_iterator = get_generators(features, permute=True)
-
-# define the residues that will makeup the loops connecting
-# the feature complements produced by the generators 
-linkers = 6*['ala']
 
 # go over all generators
 for k,generator_set in enumerate(generators_iterator, start=1):
@@ -69,7 +64,9 @@ for k,generator_set in enumerate(generators_iterator, start=1):
         peptide.append_residue(complement, is_head=True)
         
         # if this is not a terminal complement, then grow
-        # this chain
+        # this chain by adding a variable length linker
+        # (also, add a dummy glycine for the loop closing
+        # algorithm)
         if n < size:
             linkers = random.randint(3,6)*['ala'] + ['gly']
             grow(peptide, *linkers)
@@ -111,6 +108,6 @@ for k,generator_set in enumerate(generators_iterator, start=1):
     # renumber peptide atoms
     peptide.compile()
     # save peptide to file
-    with open('out/complement_%d.pdb'%k, 'w') as fout:
+    with open(OUTPUT_FOLDER + '/complement_%d.pdb'%k, 'w') as fout:
         print >> fout, peptide.as_pdb(include_bonds=True)
         print str(k), 'Done creating sequence', ''.join(r.letter for r in peptide.iter_residues())
