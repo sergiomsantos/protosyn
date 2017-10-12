@@ -105,9 +105,12 @@ for k,generator_set in enumerate(generators_iterator, start=1):
 
     # add terminal protons to peptide chain
     cap_chain(peptide)
-    # renumber peptide atoms
+    # add the ligand
+    peptide.append_residue(ligand.copy(), is_head=True)
+    # renumber atoms
     peptide.compile()
     # save peptide to file
     with open(OUTPUT_FOLDER + '/complement_%d.pdb'%k, 'w') as fout:
         print >> fout, peptide.as_pdb(include_bonds=True)
         print str(k), 'Done creating sequence', ''.join(r.letter for r in peptide.iter_residues())
+    

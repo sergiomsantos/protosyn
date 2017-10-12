@@ -1,4 +1,4 @@
-from dihedral import Dihedral
+from dihedral import Dihedral, DihedralType
 from atom import Atom
 import dbase
 import copy
@@ -15,8 +15,8 @@ class Residue(object):
         self.rindex = -1
         self.index = -1
         self.dihedrals = {}
-        self.next = None
-        self.prev = None
+        self._next = None
+        self._prev = None
         self.atoms = []
         self.parent = None
         self.letter = maps.THREE_2_ONE.get(name, '?')
@@ -32,9 +32,9 @@ class Residue(object):
     
     #==========================================================================
     def __str__(self):
-        return '<Residue:{0}:{1} {2}<-->{3}>'.format(self.name, self.index,
-            self.prev.name if self.prev else None,
-            self.next.name if self.next else None)
+        pn,pi = (self._prev.name,self._prev.index) if self._prev else (None,'?')
+        nn,ni = (self._next.name,self._next.index) if self._next else (None,'?')
+        return '<Residue:{0}:{1} {2}:{3}<-->{4}:{5}>'.format(self.name, self.index, pn, pi, nn, ni)
     
     def __repr__(self):
         return str(self)
@@ -60,9 +60,9 @@ class Residue(object):
     #==========================================================================
     def get_atom_by_name(self, name):
         if name.startswith('-'):
-            res = self.prev
+            res = self._prev
         elif name.startswith('+'):
-            res = self.next
+            res = self._next
         else:
             res = self
         
@@ -72,6 +72,7 @@ class Residue(object):
             for atom in res.atoms:
                 if atom.name == name:
                     the_atom = atom
+                    break
         return the_atom
     
     #==========================================================================
@@ -90,9 +91,41 @@ class Residue(object):
         if auto_setup or setup_sidechain_dihedrals:
             Dihedral.setup_sidechain_dihedrals(self)
             
-        if auto_setup or setup_backbone_dihedrals:
-            Dihedral.setup_backbone_dihedrals(self)
+        # if auto_setup or setup_backbone_dihedrals:
+        #     Dihedral.setup_backbone_dihedrals(self)
 
+    def has_next(self):
+        return self._next is not None
+    
+    @property
+    def next(self):
+        return self._next
+    
+    @next.setter
+    def next(self, value):
+        self._next = value
+        if value is None:
+            self.dihedrals.pop(DihedralType.PSI, None)
+        else:
+            self.dihedrals[DihedralType.PSI] = Dihedral.get_dihedral(DihedralType.PSI, 'N','CA', 'C', '+N', self)
+    
+    def has_prev(self):
+        return self._prev is not None
+    
+    @property
+    def prev(self):
+        return self._prev
+    
+    @prev.setter
+    def prev(self, value):
+        self._prev = value
+        if value is None:
+            self.dihedrals.pop(DihedralType.OMEGA, None)
+            self.dihedrals.pop(DihedralType.PHI, None)
+        else:
+            self.dihedrals[DihedralType.OMEGA] = Dihedral.get_dihedral(DihedralType.OMEGA, '-CA','-C', 'N','CA', self)
+            self.dihedrals[DihedralType.PHI] = Dihedral.get_dihedral(DihedralType.PHI, '-C', 'N','CA', 'C', self)
+    
     #==========================================================================
     def iter_atoms(self):
         for atom in self.atoms:
@@ -110,14 +143,14 @@ class Residue(object):
         return utils.bonds_as_pdb(self)
         
     def copy(self):
-        nxt = self.next
-        prev = self.prev
+        nxt = self._next
+        prev = self._prev
         parent = self.parent
-        self.next = self.prev = self.parent = None
+        self._next = self._prev = self.parent = None
         residue = copy.deepcopy(self)
         self.parent = parent
-        self.prev = prev
-        self.next = nxt
+        self._prev = prev
+        self._next = nxt
         
         return residue
 

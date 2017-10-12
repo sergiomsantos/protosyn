@@ -62,9 +62,11 @@ class CCD:
                 success = rmsd <= self.threshold
                 return success, rmsd, iteration
             
+            indices = range(3*(loop_length-1))
+            np.random.shuffle(indices)
             # for n in xrange(3*(loop_length-1)):
-            for n in xrange(3*(loop_length-1)-1,-1,-1):
-                
+            # for n in xrange(3*(loop_length-1)-1,-1,-1):
+            for n in indices:    
                 # skip omega
                 if (n+1)%3 == 0:
                     continue

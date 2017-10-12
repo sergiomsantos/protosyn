@@ -36,16 +36,16 @@ class Dihedral(object):
         self.movable = sorted(movable)
         
         self._value = 0.0
-        if parent:
-            self.calculate()
+        #if parent:
+        self.calculate()
         
     #==========================================================================
     def __repr__(self):
         return str(self)
     
     def __str__(self):
-        return ' Dihedral(%s, %s, %s, %s, %s, %s) = %8.3f'%(self.type.name,
-                        self.a1, self.a2, self.a3, self.a4, str(self.movable), self.degrees)
+        return ' Dihedral(%s, %s, %s, %s, %s, %s, %s) = %8.3f'%(self.type.name,
+                        self.a1, self.a2, self.a3, self.a4, str(self.movable), self.parent, self.degrees)
     
     def calculate(self):
         at1 = self.parent.get_atom_by_name(self.a1)
@@ -55,14 +55,48 @@ class Dihedral(object):
         self._value = utils.calculate_dihedral(at1.xyz, at2.xyz, at3.xyz, at4.xyz)
 
     #==========================================================================
-    def _set_dihedral(self, value):
-        residue = self.parent
-        at2 = residue.get_atom_by_name(self.a2)    
-        at3 = residue.get_atom_by_name(self.a3)
+    # def _set_dihedral(self, value):
+    #     residue = self.parent
+    #     at2 = residue.get_atom_by_name(self.a2)    
+    #     at3 = residue.get_atom_by_name(self.a3)
+    #     origin = at2.xyz
+    #     axis   = at3.xyz - origin
+    #     angle  = value - self._value
+    #     xyz    = residue.get_coordinates()
+    #     xmov = xyz[self.movable] - origin
+    #     xyz[self.movable] = utils.rotation_about_vector(xmov, angle, axis) + origin
+    #     residue.set_coordinates(xyz)
 
+    #     if self.type.value < DihedralType.CHI1.value:
+    #         residue = residue.next
+    #         while residue != None:
+    #             xyz = residue.get_coordinates()
+    #             residue.set_coordinates(utils.rotation_about_vector(xyz-origin, angle, axis) + origin)
+    #             residue = residue.next
+        
+    #     self._value = value #np.remainder(np.pi+angle, 2*np.pi)-np.pi
+
+
+    #==========================================================================
+    def set_degrees(self, value):
+        # self._set_dihedral(np.radians(value))
+        self.set_radians(np.radians(value))
+        
+    def get_degrees(self):
+        # return np.rad2deg(self._value)
+        return np.rad2deg(self.get_radians())
+    degrees = property(get_degrees, set_degrees)
+    
+    #==========================================================================
+    def set_radians(self, value):
+        #self._set_dihedral(value)
+        current = self.get_radians()
+        residue = self.parent
+        at2 = residue.get_atom_by_name(self.a2)
+        at3 = residue.get_atom_by_name(self.a3)
         origin = at2.xyz
         axis   = at3.xyz - origin
-        angle  = value - self._value
+        angle  = value - current
         xyz    = residue.get_coordinates()
         xmov = xyz[self.movable] - origin
         xyz[self.movable] = utils.rotation_about_vector(xmov, angle, axis) + origin
@@ -74,23 +108,14 @@ class Dihedral(object):
                 xyz = residue.get_coordinates()
                 residue.set_coordinates(utils.rotation_about_vector(xyz-origin, angle, axis) + origin)
                 residue = residue.next
-        
-        self._value = value #np.remainder(np.pi+angle, 2*np.pi)-np.pi
-
-    #==========================================================================
-    def set_degrees(self, value):
-        self._set_dihedral(np.radians(value))
-
-    def get_degrees(self):
-        return np.rad2deg(self._value)
-    degrees = property(get_degrees, set_degrees)
-    
-    #==========================================================================
-    def set_radians(self, value):
-        self._set_dihedral(value)
 
     def get_radians(self):
-        return self._value
+        #return self._value
+        at1 = self.parent.get_atom_by_name(self.a1)
+        at2 = self.parent.get_atom_by_name(self.a2)
+        at3 = self.parent.get_atom_by_name(self.a3)
+        at4 = self.parent.get_atom_by_name(self.a4)
+        return utils.calculate_dihedral(at1.xyz, at2.xyz, at3.xyz, at4.xyz)
     radians = property(get_radians, set_radians)
     
 
@@ -102,20 +127,20 @@ class Dihedral(object):
         movable = utils.get_movable(at3, at2, [])
         return cls(dtype, a1, a2, a3, a4, movable, residue)
 
-    @classmethod
-    def setup_backbone_dihedrals(cls, residue):
-        dihedrals = residue.dihedrals
-        DType = DihedralType
+    # @classmethod
+    # def setup_backbone_dihedrals(cls, residue):
+    #     dihedrals = residue.dihedrals
+    #     DType = DihedralType
 
-        for dtype in DihedralType.get_bb():
-            dihedrals.pop(dtype, None)
+    #     for dtype in DihedralType.get_bb():
+    #         dihedrals.pop(dtype, None)
         
-        if residue.prev is not None:
-            dihedrals[DType.OMEGA] = cls.get_dihedral(DType.OMEGA, '-CA','-C', 'N','CA', residue)
-            dihedrals[DType.PHI  ] = cls.get_dihedral(DType.PHI,    '-C', 'N','CA', 'C', residue)
+    #     if residue.prev is not None:
+    #         dihedrals[DType.OMEGA] = cls.get_dihedral(DType.OMEGA, '-CA','-C', 'N','CA', residue)
+    #         dihedrals[DType.PHI  ] = cls.get_dihedral(DType.PHI,    '-C', 'N','CA', 'C', residue)
         
-        if residue.next is not None:
-            dihedrals[DType.PSI] = cls.get_dihedral(DType.PSI, 'N','CA', 'C', '+N', residue)
+    #     if residue.next is not None:
+    #         dihedrals[DType.PSI] = cls.get_dihedral(DType.PSI, 'N','CA', 'C', '+N', residue)
 
 
     @classmethod
@@ -149,8 +174,8 @@ class Dihedral(object):
                 path.pop(0)
 
 
-if __name__ == '__main__':
-    d = Dihedral(DihedralType.OMEGA, 'a1','a2','a3','a4',[1,2,3],None)
-    print d
-    print DihedralType.get_bb()
-    print DihedralType.get_sc()
+# if __name__ == '__main__':
+#     d = Dihedral(DihedralType.OMEGA, 'a1','a2','a3','a4',[1,2,3],None)
+#     print d
+#     print DihedralType.get_bb()
+#     print DihedralType.get_sc()

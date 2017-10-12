@@ -22,14 +22,13 @@ def grow(chain, *frag_names):
     
     if chain.count_residues() == 0:
         fragment = FragmentProvider.get_fragment(frag_names[0])
-        chain.append_residue(fragment)
+        chain.append_residue(fragment, is_head=True)
         return grow(chain, *frag_names[1:])
     
     tail = chain.residues[-1]
     for n,frag_name in enumerate(frag_names, start=1):
         
         fragment = FragmentProvider.get_fragment(frag_name)
-        chain.append_residue(fragment)
         
         if n == 1:
             R,T = fit(fragment, ('N','CA','C'), tail, ('N','CA','C'))
@@ -39,6 +38,7 @@ def grow(chain, *frag_names):
         xyz = fragment.get_coordinates()*[1,(-1)**n,1] + [n*3.638,0,0]
         xyz = np.dot(invR, np.transpose(xyz - T)).T
         fragment.set_coordinates(xyz)
+        chain.append_residue(fragment)
 
     # take the tail residue back to its original position
     xyz = tail.get_coordinates()
@@ -127,18 +127,6 @@ def impose_secondary_structure(peptide, selection, ss):
         for residue in residues:
             if dtype in residue.dihedrals:
                 residue.dihedrals[dtype].degrees = value
-
-
-#         # set secondary structure
-#         for _slice,dihedrals in self.secondary_structure:
-#             #print _slice
-#             #print mol.residues[_slice]
-#             for residue in mol.residues[_slice]:
-#                 for dihd_type,value in dihedrals.iteritems():
-#                     if dihd_type in residue.dihedrals:
-#                         residue.dihedrals[dihd_type].degrees = value
-        
-#         return mol
 
 
 class ConfLib(object):

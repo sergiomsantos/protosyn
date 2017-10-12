@@ -16,6 +16,7 @@ class Molecule(object):
         if values.shape == (self.size,3):
             for n,at in enumerate(self.iter_atoms()):
                 at.xyz = values[n].copy()
+            
         else:
             raise Exception('Invalid shape for coordinate matrix: should be (%d,3)!'%self.size)
     
@@ -27,26 +28,32 @@ class Molecule(object):
         return str(self)
     
     def append_residue(self, residue, is_head=False):
-
+        
         # remove the residue from its previous parent (if any)
-        parent = residue.parent
-        if parent:
-            parent.remove_residue(residue)
+        if residue.parent:
+            residue.parent.remove_residue(residue)
+        
+        residue.parent = self
         
         if self.residues:
             prev = self.residues[-1]
-
+        
             if is_head:
-                residue.next = residue.prev = None
+                residue.next = None
+                residue.prev = None
             else:
                 prev.next = residue
                 residue.prev = prev
                 residue.next = None
         else:
-            residue.next = residue.prev = None
+            residue.next = None
+            residue.prev = None
         
         self.residues.append(residue)
-        residue.parent = self
+        i = len(self.residues)-1
+        self.renumber(i)
+
+        self.size += residue.count_atoms()
 
 
     def remove_residue(self, residue):
@@ -55,13 +62,33 @@ class Molecule(object):
                 residue.prev.next = residue.next
             if residue.next:
                 residue.next.prev = residue.prev
-            residue.next = residue.prev = residue.parent = None
+            residue.next = None
+            residue.prev = None
+            residue.parent = None
             try:
-                self.residues.remove(residue)
+                i = self.residues.index(residue)
+                # self.residues.remove(residue)
             except ValueError:
                 pass
+            else:
+                self.residues.pop(i)
+                self.renumber(i)
 
-
+            self.size -= residue.count_atoms()
+                
+    
+    def renumber(self, i=0):
+        if i==0:
+            nr = na = 0
+        else:
+            nr = self.residues[i-1].index+1
+            na = self.residues[i-1].atoms[-1].index+1
+        for residue in self.residues[i:]:
+            residue.index = nr
+            nr += 1
+            for atom in residue.iter_atoms():
+                atom.index = na
+                na += 1
     # def replace_residue(self, old_residue, new_residue):
     #     if old_residue.parent is self:
     #         assert new_residue.parent is None
@@ -83,15 +110,18 @@ class Molecule(object):
 
 
     def compile(self, auto_setup=False, auto_bond=False, setup_sidechain_dihedrals=False, setup_backbone_dihedrals=False):
-        atm_counter = 0
-        for i,residue in enumerate(self.iter_residues()):
-            for j,atom in enumerate(residue.iter_atoms()):
-                atom.index = atm_counter
-                atom.rindex = j
-                atm_counter += 1
-            residue.index = i
+        # atm_counter = 0
+        # for i,residue in enumerate(self.iter_residues()):
+        #     for j,atom in enumerate(residue.iter_atoms()):
+        #         atom.index = atm_counter
+        #         atom.rindex = j
+        #         atm_counter += 1
+        #     residue.index = i
+        #     residue.compile(auto_setup, auto_bond, setup_sidechain_dihedrals, setup_backbone_dihedrals)
+        # self.size = atm_counter
+        self.renumber()
+        for residue in self.iter_residues():
             residue.compile(auto_setup, auto_bond, setup_sidechain_dihedrals, setup_backbone_dihedrals)
-        self.size = atm_counter
     
 
     def as_pdb(self, include_bonds=False, *remarks, **kwargs):
@@ -126,11 +156,13 @@ class Molecule(object):
         rindex = 0
         pivot = None
         atoms = [None]
-        is_head = False
+        is_head = True
         molecule = Molecule('mol')
         with open(fname, 'r') as fin:
             for line in fin:
-                if line.startswith('ATOM'):
+                if line.startswith('TITLE'):
+                    molecule.name = line[5:].strip()
+                elif line.startswith('ATOM'):
                     atname,resname,resid,xyz = parse_pdb_line(line)
                     if is_head or (resid != rindex):
                         residue = Residue(resname)
@@ -156,14 +188,16 @@ class Molecule(object):
     def get_segments(self):
         segments = []
         for residue in self.iter_residues():
-            if residue.prev is None:
+            # if residue.prev is None:
+            if not residue.has_prev():
                 segment = []
                 segments.append(segment)
             segment.append(residue)
         return segments
 
     def count_segments(self):
-        return sum((1 for r in self.iter_residues() if r.prev is None))
+        # return sum((1 for r in self.iter_residues() if r.prev is None))
+        return sum((1 for r in self.iter_residues() if not r.has_prev()))
 
     def count_residues(self):
         return len(self.residues)
