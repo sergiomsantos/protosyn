@@ -35,9 +35,9 @@ class Dihedral(object):
         self.parent = parent
         self.movable = sorted(movable)
         
-        self._value = 0.0
+        # self._value = 0.0
         #if parent:
-        self.calculate()
+        # self.calculate()
         
     #==========================================================================
     def __repr__(self):
@@ -47,12 +47,12 @@ class Dihedral(object):
         return ' Dihedral(%s, %s, %s, %s, %s, %s, %s) = %8.3f'%(self.type.name,
                         self.a1, self.a2, self.a3, self.a4, str(self.movable), self.parent, self.degrees)
     
-    def calculate(self):
-        at1 = self.parent.get_atom_by_name(self.a1)
-        at2 = self.parent.get_atom_by_name(self.a2)
-        at3 = self.parent.get_atom_by_name(self.a3)
-        at4 = self.parent.get_atom_by_name(self.a4)
-        self._value = utils.calculate_dihedral(at1.xyz, at2.xyz, at3.xyz, at4.xyz)
+    # def calculate(self):
+    #     at1 = self.parent.get_atom_by_name(self.a1)
+    #     at2 = self.parent.get_atom_by_name(self.a2)
+    #     at3 = self.parent.get_atom_by_name(self.a3)
+    #     at4 = self.parent.get_atom_by_name(self.a4)
+    #     self._value = utils.calculate_dihedral(at1.xyz, at2.xyz, at3.xyz, at4.xyz)
 
     #==========================================================================
     # def _set_dihedral(self, value):
@@ -78,19 +78,16 @@ class Dihedral(object):
 
 
     #==========================================================================
-    def set_degrees(self, value):
-        # self._set_dihedral(np.radians(value))
-        self.set_radians(np.radians(value))
-        
-    def get_degrees(self):
-        # return np.rad2deg(self._value)
-        return np.rad2deg(self.get_radians())
-    degrees = property(get_degrees, set_degrees)
+    def _get(self):
+        p = self.parent
+        at1 = p.get_atom_by_name(self.a1)
+        at2 = p.get_atom_by_name(self.a2)
+        at3 = p.get_atom_by_name(self.a3)
+        at4 = p.get_atom_by_name(self.a4)
+        return utils.calculate_dihedral(at1.xyz, at2.xyz, at3.xyz, at4.xyz)
     
-    #==========================================================================
-    def set_radians(self, value):
-        #self._set_dihedral(value)
-        current = self.get_radians()
+    def _set(self, value):
+        current = self._get()
         residue = self.parent
         at2 = residue.get_atom_by_name(self.a2)
         at3 = residue.get_atom_by_name(self.a3)
@@ -109,16 +106,18 @@ class Dihedral(object):
                 residue.set_coordinates(utils.rotation_about_vector(xyz-origin, angle, axis) + origin)
                 residue = residue.next
 
-    def get_radians(self):
-        #return self._value
-        at1 = self.parent.get_atom_by_name(self.a1)
-        at2 = self.parent.get_atom_by_name(self.a2)
-        at3 = self.parent.get_atom_by_name(self.a3)
-        at4 = self.parent.get_atom_by_name(self.a4)
-        return utils.calculate_dihedral(at1.xyz, at2.xyz, at3.xyz, at4.xyz)
-    radians = property(get_radians, set_radians)
+    # radians = property(get_radians, set_radians)
     
-
+    #==========================================================================
+    def _get_degrees(self):
+        return np.rad2deg(self._get())
+    
+    def _set_degrees(self, value):
+        # self._set_dihedral(np.radians(value))
+        self._set(np.radians(value))
+    degrees = property(_get_degrees, _set_degrees)
+    radians = property(_get, _set)
+    
     #==========================================================================
     @classmethod
     def get_dihedral(cls, dtype, a1, a2, a3, a4, residue):

@@ -84,8 +84,8 @@ for k,generator_set in enumerate(generators_iterator, start=1):
         # use CCD to close the loop, holding in position the first residue
         # of chain1 and targetting the first residue of chain2
         ccd = CCD(anchor, target, max_iter=200, threshold=0.5)
-        success, rmsd, iteration = ccd.run(peptide)
-        print ' + ccd chain %d'%n, success, rmsd, iteration
+        success, rmsd, dcn, iteration = ccd.run(peptide)
+        print ' + ccd chain %d'%n, success, rmsd, dcn, iteration
 
         # the last residue of chain1 is a dummy one that
         # its sole purpose is to calculate the distance to
@@ -105,11 +105,10 @@ for k,generator_set in enumerate(generators_iterator, start=1):
 
     # add terminal protons to peptide chain
     cap_chain(peptide)
+
     # add the ligand
     peptide.append_residue(ligand.copy(), is_head=True)
-    # renumber atoms
-    peptide.compile()
-    # save peptide to file
+    
     with open(OUTPUT_FOLDER + '/complement_%d.pdb'%k, 'w') as fout:
         print >> fout, peptide.as_pdb(include_bonds=True)
         print str(k), 'Done creating sequence', ''.join(r.letter for r in peptide.iter_residues())

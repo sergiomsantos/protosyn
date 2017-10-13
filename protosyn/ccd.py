@@ -60,10 +60,15 @@ class CCD:
                 if not logger:
                     self._update_loop(loop, bbone_angles)
                 success = rmsd <= self.threshold
-                return success, rmsd, iteration
+                # calculate C-N distance between the C-tip of the loop (excluding dummy residue)
+                # and the target residue (N)
+                C = loop[-2].get_atom_by_name('C')
+                N = self.target.get_atom_by_name('N')
+                dCN = np.sqrt(((C.xyz-N.xyz)**2).sum())
+                return success, rmsd, dCN, iteration
             
             indices = range(3*(loop_length-1))
-            np.random.shuffle(indices)
+            # np.random.shuffle(indices)
             # for n in xrange(3*(loop_length-1)):
             # for n in xrange(3*(loop_length-1)-1,-1,-1):
             for n in indices:    

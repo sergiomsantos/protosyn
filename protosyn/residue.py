@@ -47,15 +47,20 @@ class Residue(object):
     #==========================================================================
     def append_atom(self, atom):
         if atom not in self.atoms:
+            atom.rindex = self.atoms[-1].rindex+1 if self.atoms else 0    
             self.atoms.append(atom)
             atom.parent = self
 
-    def remove_atom(self, atom):
-        try:
-            self.atoms.remove(atom)
-            atom.parent = None
-        except ValueError:
-            pass
+    # def remove_atom(self, atom):
+    #     try:
+    #         self.atoms.remove(atom)
+    #     except ValueError:
+    #         pass
+    #     else:
+    #         atom.parent = None
+    #         for n,at in enumerate(self.atoms):
+    #             at.rindex = n
+            
         
     #==========================================================================
     def get_atom_by_name(self, name):

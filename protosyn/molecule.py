@@ -89,6 +89,7 @@ class Molecule(object):
             for atom in residue.iter_atoms():
                 atom.index = na
                 na += 1
+    
     # def replace_residue(self, old_residue, new_residue):
     #     if old_residue.parent is self:
     #         assert new_residue.parent is None
@@ -179,7 +180,6 @@ class Molecule(object):
                     pivot = atoms[idxs[0]]
                     for i in idxs[1:]:
                         pivot.connect_to(atoms[i])
-        
         auto_setup = pivot is None
         molecule.compile(auto_setup=auto_setup)
         return molecule

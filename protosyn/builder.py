@@ -84,6 +84,7 @@ def cap_chain(chain, cap_c=True, cap_n=True):
         res.name = 'C'+res.name
         res.append_atom(Atom('OC2', x1))
         res.compile(auto_setup=True)
+    res.parent.renumber()
 
 
 class FragmentProvider:
